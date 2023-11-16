@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Milestone 2</title>
+
+    <style>
+        #error {
+            color: #d55;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<p id="error">Something went wrong</p>
+<h1><span id="user">Loading...</span> has reached milestone 2!</h1>
+<p>API Hostname: <code id="hostname">Loading...</code></p>
+
+<script>
+    const apiPath = "/user"
+    fetch(apiPath)
+        .then((res) => res.json())
+        .then((data) => {
+            document.getElementById("user").innerText = data["name"]
+            document.getElementById("hostname").innerText = data["hostname"]
+        }).catch(() => {
+            document.getElementById("error").style["display"] = "block"
+        })
+</script>
+</body>
+</html>

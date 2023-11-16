@@ -1,0 +1,71 @@
+# Defines which version of the Kubernetes API this file is made for
+apiVersion: apps/v1
+# Defines that the resource is a deployment
+kind: Deployment
+metadata:
+  # Sets the name of this deployment
+  name: nodejs-deployment-mm
+# Specifications for the deployment
+spec:
+  # The pod will be replicated for load balancing
+  replicas: 2
+  # The selector is used to find the pods managed by the deployment
+  selector:
+    matchLabels:
+      app: nodejs
+  # Defines a template for creating pods
+  template:
+    metadata:
+      labels:
+        # This label is what the selector above will look for
+        app: nodejs
+    # Specifications for the pod
+    spec:
+      # Specifications for the Docker container running inside the pod
+      containers:
+        # Sets the name of the container
+        - name: nodejs
+          # Ensures the "node" image from dockerhub is used
+          image: node
+          # Exposes port 80 for http access
+          ports:
+            - containerPort: 3000
+          # Mounts two volumes to the container
+          volumeMounts:
+            # This directory will contain the files needed for the Node.js app.
+            - mountPath: /api
+              name: api
+          # Ensures that any commands are executed from the /app directory
+          workingDir: /api
+          # Ensures the command "npm start" is executed on the container when it starts
+          command: [ "npm", "start" ]
+      # Defines volumes to be used by the container
+      volumes:
+        # Volume 1: Node.js app
+        - name: api
+          hostPath:
+            # The path on the cluster
+            path: /minikube/api/
+            type: Directory
+      # pods will always restart on failure
+      restartPolicy: Always
+
+---
+
+# Defines which version of the Kubernetes API this file is made for
+apiVersion: v1
+# Defines that the resource is a service
+kind: Service
+metadata:
+  # Sets the name of this service
+  name: nodejs-service-mm
+# Specifications for the service
+spec:
+  # The selector used to find pods to assign this service to
+  selector:
+    app: nodejs
+  # TCP requests to port 3000 will be forwarded to port 3000 on the selected pods
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000

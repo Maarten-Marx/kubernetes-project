@@ -1,0 +1,76 @@
+# Defines which version of the Kubernetes API this file is made for
+apiVersion: apps/v1
+# Defines that the resource is a deployment
+kind: Deployment
+metadata:
+  # Sets the name of this deployment
+  name: lighttpd-deployment-mm
+# Specifications for the deployment
+spec:
+  # The pod will be replicated for load balancing
+  replicas: 2
+  # The selector is used to find the pods managed by the deployment
+  selector:
+    matchLabels:
+      app: lighttpd
+  # Defines a template for creating pods
+  template:
+    metadata:
+      labels:
+        # This label is what the selector above will look for
+        app: lighttpd
+    # Specifications for the pod
+    spec:
+      # Specifications for the Docker container running inside the pod
+      containers:
+        # Sets the name of the container
+        - name: lighttpd
+          # Ensures the "jitesoft/lighttpd" image from dockerhub is used
+          image: jitesoft/lighttpd
+          # Exposes port 80 for http access
+          ports:
+            - containerPort: 80
+          # Mounts two volumes to the container
+          volumeMounts:
+            # This directory will contain the HTML document for the web page
+            - mountPath: /var/www/html/
+              name: html
+            # This directory will contain a custom Lighttpd configuration file
+            - mountPath: /etc/lighttpd/
+              name: lighttpd-conf
+      # Defines volumes to be used by the container
+      volumes:
+        # Volume 1: web page document
+        - name: html
+          hostPath:
+            # The path on the cluster
+            path: /minikube/html/
+            type: Directory
+        # Volume 2: Lighttpd configuration file
+        - name: lighttpd-conf
+          hostPath:
+            # The path on the cluster
+            path: /minikube/lighttpd-conf/
+            type: Directory
+      # pods will always restart on failure
+      restartPolicy: Always
+
+---
+
+# Defines which version of the Kubernetes API this file is made for
+apiVersion: v1
+# Defines that the resource is a service
+kind: Service
+metadata:
+  # Sets the name of this service
+  name: lighttpd-service-mm
+# Specifications for the service
+spec:
+  # The selector used to find pods to assign this service to
+  selector:
+    app: lighttpd
+  # TCP requests to port 80 will be forwarded to port 80 on the selected pods
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80

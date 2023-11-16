@@ -1,0 +1,80 @@
+# Defines which version of the Kubernetes API this file is made for
+apiVersion: apps/v1
+# Defines that the resource is a deployment
+kind: Deployment
+metadata:
+  # Sets the name of this deployment
+  name: mariadb-deployment-mm
+# Specifications for the deployment
+spec:
+  # The selector is used to find the pods managed by the deployment
+  selector:
+    matchLabels:
+      app: mariadb
+  # Defines a template for creating pods
+  template:
+    metadata:
+      labels:
+        # This label is what the selector above will look for
+        app: mariadb
+    # Specifications for the pod
+    spec:
+      # Specifications for the Docker container running inside the pod
+      containers:
+          # Sets the name of the container
+        - name: mariadb
+          # Ensures the "mariadb" image from dockerhub is used
+          image: mariadb
+          # Exposes port 3306, MariaDB's default port
+          ports:
+            - containerPort: 3306
+          # Sets the MariaDB root password to "password"
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: password
+          # Mounts two volumes to the container
+          volumeMounts:
+            # Files in this directory will be used to initialize the database
+            - mountPath: /docker-entrypoint-initdb.d
+              name: sql
+            # This volume will store database data on the cluster rather than the pod
+            # Doing this makes the data persistent across pods
+            - mountPath: /var/lib/mysql
+              name: db-data
+      # Defines volumes to be used by the container
+      volumes:
+        # Volume 1: containing database initialization files
+        - name: sql
+          hostPath:
+            # The path on the cluster
+            path: /minikube/sql/
+            type: Directory
+        # Volume 2: pointing to a directory where database data will be stored
+        - name: db-data
+          hostPath:
+            # The path on the cluster
+            path: /mnt/data
+            # The directory will be created if it doesn't exist yet
+            type: DirectoryOrCreate
+      # pods will always restart on failure
+      restartPolicy: Always
+
+---
+
+# Defines which version of the Kubernetes API this file is made for
+apiVersion: v1
+# Defines that the resource is a service
+kind: Service
+metadata:
+  # Sets the name of this service
+  name: mariadb-service-mm
+# Specifications for the service
+spec:
+  # The selector used to find pods to assign this service to
+  selector:
+    app: mariadb
+  # TCP requests to port 3306 will be forwarded to port 3306 on the selected pods
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
